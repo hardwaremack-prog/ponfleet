@@ -1,0 +1,31 @@
+{
+  "port": 8090,
+  "max_targets": 16,
+  "poll_seconds": 1.0,
+  "clock_sync_seconds": 30,
+  "default_lead_seconds": 2,
+  "mark_types": [
+    {"key": "pon_rx", "label": "PON received", "short": "PON", "hint": "Head-end / collector shows last-gasp outage notice"},
+    {"key": "mesh_lost", "label": "Dropped from mesh", "short": "Mesh", "hint": "Meter no longer seen / no longer routing for neighbours"},
+    {"key": "radio_dark", "label": "Radio dark (caps out)", "short": "Dark", "hint": "Last sign of RF activity from the meter"},
+    {"key": "restore_rx", "label": "Restore notice", "short": "Rst", "hint": "Power-restoration notice received"},
+    {"key": "rejoined", "label": "Rejoined mesh", "short": "Join", "hint": "Meter back on the network"}
+  ],
+  "presets": [
+    {"name": "Momentary blip (1 s)", "steps": [{"off": 1, "on": 60}]},
+    {"name": "Sustained 5 min", "steps": [{"off": 300, "on": 120}]},
+    {"name": "Sustained 30 min (cap drain)", "steps": [{"off": 1800, "on": 600}]},
+    {"name": "Cap holdup ladder", "steps": [
+      {"off": 5, "on": 120}, {"off": 15, "on": 120}, {"off": 30, "on": 180},
+      {"off": 60, "on": 300}, {"off": 120, "on": 300}, {"off": 300, "on": 600}
+    ]},
+    {"name": "Recloser (3 shots)", "steps": [
+      {"off": 2, "on": 3}, {"off": 5, "on": 3}, {"off": 15, "on": 120}
+    ]},
+    {"name": "Flicker x10", "steps": [
+      {"off": 0.5, "on": 2}, {"off": 0.5, "on": 2}, {"off": 0.5, "on": 2}, {"off": 0.5, "on": 2},
+      {"off": 0.5, "on": 2}, {"off": 0.5, "on": 2}, {"off": 0.5, "on": 2}, {"off": 0.5, "on": 2},
+      {"off": 0.5, "on": 2}, {"off": 0.5, "on": 60}
+    ]}
+  ]
+}

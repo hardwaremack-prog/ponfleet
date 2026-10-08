@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PON Fleet</title>
+<style>
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#101315;color:#e4e8ea;font:16px/1.5 system-ui,sans-serif;padding:16px;box-sizing:border-box}
+.box{max-width:580px;background:#171b1e;border:1px solid #2a3035;border-radius:16px;padding:28px}
+h1{margin:0 0 4px;font-size:24px;display:flex;align-items:center;gap:12px} img{width:48px;height:48px}
+p{color:#8a949b} code{background:#101315;border:1px solid #2a3035;border-radius:6px;padding:2px 6px;color:#4cc2ff;font-size:14px}
+ol{padding-left:20px} li{margin:8px 0} #st{color:#ffb020}
+.go{display:flex;gap:8px;margin-top:6px} input{flex:1;font:15px monospace;background:#101315;color:#e4e8ea;border:1px solid #2a3035;border-radius:8px;padding:8px}
+button{font:600 15px system-ui;background:#0f3321;color:#c9ffe0;border:1px solid #1f6b45;border-radius:8px;padding:8px 14px;cursor:pointer}
+</style></head><body><div class="box">
+<h1><img src="ponfleet-icon.png" alt="">PON Fleet</h1>
+<p id="st">Looking for PON Fleet...</p>
+<div id="help" hidden>
+<p>PON Fleet is the control server for all your PON Lab Pis, so it has to be started first.</p>
+<ol>
+<li>Double-click the <b>PON Fleet</b> icon on the Desktop (added by <b>Set Up My Apps.sh</b>), or run <code>bash start-fleet.sh</code> in this folder.</li>
+<li>On Windows, double-click <b>Start PON Fleet.bat</b> in this folder.</li>
+<li>To keep it running all the time on a Pi: <code>sudo ./install.sh</code> in this folder.</li>
+</ol>
+<p>PON Fleet running on a different Pi? Type its address:</p>
+<div class="go"><input id="host" placeholder="192.168.1.50"><button onclick="openHost()">Open</button></div>
+<p style="margin-top:14px">This page keeps checking and jumps to PON Fleet as soon as it's running here.</p>
+</div></div>
+<script>
+// PON Fleet answers /pf.js; other programs won't, so we never open the wrong app.
+const PORTS=[8090,8091];
+let saved=''; try{saved=localStorage.getItem('ponfleet-host')||''}catch(e){}
+function openHost(){let h=document.getElementById('host').value.trim();if(!h)return;
+  try{localStorage.setItem('ponfleet-host',h)}catch(e){}
+  location.href='http://'+(h.includes(':')?h:h+':8090')+'/'}
+function probe(){window.__ponfleet=[];let left=PORTS.length;
+  PORTS.forEach(p=>{const sc=document.createElement('script');sc.src='http://127.0.0.1:'+p+'/pf.js?'+Date.now();
+    sc.onload=sc.onerror=()=>{sc.remove();if(--left===0)done()};document.head.appendChild(sc)})}
+function done(){const p=(window.__ponfleet||[])[0];
+  if(p){location.replace('http://127.0.0.1:'+p+'/');return}
+  document.getElementById('st').textContent='PON Fleet isn\'t running on this computer yet.';
+  const h=document.getElementById('help'); if(h.hidden){h.hidden=false;document.getElementById('host').value=saved}
+  setTimeout(probe,2500)}
+probe();
+</script></body></html>

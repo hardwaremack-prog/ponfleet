@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PON Fleet</title>
+<link rel="icon" href="/static/icon-256.png">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1113; --panel:#161a1d; --panel2:#1c2125; --line:#29302f; --ink:#e6e9ea; --dim:#879298;
+  --on:#3ddc84; --off:#ff5a4e; --amber:#ffb020; --accent:#4cc2ff; --sel:#ffb020;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 var(--sans)}
+header{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+h1{font:600 17px var(--mono);letter-spacing:.06em;margin:0} h1 span{color:var(--amber)}
+.stat{font:500 12px var(--mono);color:var(--dim)} .stat b{color:var(--ink)}
+.clock{font:500 13px var(--mono);color:var(--dim);margin-left:auto}
+button{font:500 13px var(--sans);border:1px solid var(--line);background:var(--panel2);color:var(--ink);padding:7px 12px;border-radius:4px;cursor:pointer}
+button:hover{border-color:#4a535a} button:disabled{opacity:.35;cursor:default}
+.red{background:#3d1210;border-color:#7a2219;color:#ffd6d2;font-weight:600}
+.red:hover{background:#561812}
+.green{background:#0f3321;border-color:#1f6b45;color:#c9ffe0;font-weight:600}
+.amber{background:#3a2a08;border-color:#7a5a12;color:#ffe2a6;font-weight:600}
+input,select{font:13px var(--mono);background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:6px 8px;min-width:0}
+input[type=number]{width:74px}
+.bar{position:sticky;top:0;z-index:5;background:#12161899;backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.selcount{font:600 15px var(--mono);padding:6px 10px;border:1px solid #7a5a12;border-radius:4px;color:var(--amber);min-width:96px;text-align:center}
+.selcount.full{background:#3a2a08}
+.sep{width:1px;height:28px;background:var(--line)}
+.grp{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0}
+.grp select{max-width:100%}
+.countdown{font:600 14px var(--mono);color:var(--amber)}
+main{padding:16px 18px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px;max-width:1600px;margin:0 auto}
+.nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(370px,100%),1fr));gap:14px}
+.node{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.node.down{opacity:.7;border-style:dashed}
+.nh{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.lamp{width:12px;height:12px;border-radius:50%;background:var(--on);box-shadow:0 0 8px var(--on);flex:none}
+.down .lamp{background:#555;box-shadow:none}
+.nname{font-weight:600} .nhost{font:12px var(--mono);color:var(--dim)}
+.tag{font:600 10px var(--mono);padding:2px 6px;border-radius:3px;letter-spacing:.06em}
+.tag.sim{background:#3a2f12;color:var(--amber)} .tag.live{background:#0f3321;color:var(--on)}
+.nmeta{flex-basis:100%;font:11px var(--mono);color:var(--dim)}
+.nbtn{margin-left:auto;display:flex;gap:4px}
+.icon{padding:4px 8px;font-size:12px}
+.chs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;padding:10px}
+.ch{border:1px solid var(--line);border-radius:5px;padding:8px 9px;background:var(--panel2);cursor:pointer;position:relative;user-select:none}
+.ch:hover{border-color:#4a535a}
+.ch.sel{border-color:var(--sel);box-shadow:0 0 0 1px var(--sel) inset}
+.ch.out{background:#2a1513}
+.ch .top{display:flex;align-items:center;gap:6px}
+.ch .dot{width:9px;height:9px;border-radius:50%;background:var(--on)}
+.ch.out .dot{background:var(--off);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.4}}
+.ch .cid{font:600 11px var(--mono);color:var(--dim)}
+.ch .box{margin-left:auto;width:16px;height:16px;border:1.5px solid var(--dim);border-radius:3px;display:grid;place-items:center;font-size:11px;color:#111}
+.ch.sel .box{background:var(--sel);border-color:var(--sel)}
+.ch .mname{font-size:12px;margin:4px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch .t{font:600 18px var(--mono)} .ch.out .t{color:var(--off)}
+.ch .sub{font:11px var(--mono);color:var(--amber);min-height:14px}
+.mks{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.mk{font:600 10px var(--mono);padding:3px 5px;border-radius:3px}
+.mk.done{background:#12262f;border-color:#1d4d66;color:var(--accent)}
+section.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.phead{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.phead h2{font:600 13px var(--mono);letter-spacing:.08em;text-transform:uppercase;margin:0;margin-right:auto}
+.pbody{padding:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+table{width:100%;border-collapse:collapse;font:12px var(--mono)}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--dim);font-weight:500;position:sticky;top:0;background:var(--panel)}
+td.note{white-space:normal;color:var(--dim)}
+tr.run{cursor:pointer} tr.run:hover td{background:#1b2023}
+tr.det td{background:#12161a;color:var(--dim)} tr.det td:first-child{padding-left:28px}
+.scroll{max-height:420px;overflow:auto}
+.skew{font-weight:600} .skew.good{color:var(--on)} .skew.ok{color:var(--amber)} .skew.bad{color:var(--off)}
+.k-power_off{color:var(--off)} .k-power_on{color:var(--on)} .k-mark{color:var(--accent)} .k-seq{color:var(--amber)} .k-sense{color:#d58cff}
+.two{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px}
+@media (max-width:1150px){.two{grid-template-columns:minmax(0,1fr)}}
+.empty{padding:30px;text-align:center;color:var(--dim);border:1px dashed var(--line);border-radius:6px}
+.found{display:flex;gap:8px;align-items:center;font:12px var(--mono);padding:4px 0}
+.toast{position:fixed;bottom:16px;right:16px;background:var(--panel2);border:1px solid var(--line);padding:10px 14px;border-radius:4px;font:12px var(--mono);opacity:0;transition:.2s;max-width:420px;z-index:9}
+.toast.show{opacity:1}
+@media (max-width:600px){.bar{position:static}.clock{margin-left:0}.sep{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>PON<span>FLEET</span></h1>
+  <span class="stat" id="stats"></span>
+  <span class="clock" id="clock"></span>
+  <button class="red" onclick="restoreAll()">⏻ RESTORE ALL PIs</button>
+</header>
+<div class="bar">
+  <span class="selcount" id="selcount">0 / 16</span>
+  <div class="grp">
+    <button onclick="selectAll()">Select all</button>
+    <button onclick="clearSel()">Clear</button>
+    <select id="group" onchange="loadGroup()"><option value="">Saved groups…</option></select>
+    <button onclick="saveGroup()" title="Save current selection as a group">Save</button>
+  </div>
+  <span class="sep"></span>
+  <div class="grp">
+    <button class="red" onclick="cut()" data-need>Cut selected</button>
+    <input type="number" id="secs" value="30" min="0.2" step="0.1" title="seconds">
+    <button class="red" onclick="cut(+$('#secs').value)" data-need>Cut for N s</button>
+  </div>
+  <span class="sep"></span>
+  <div class="grp">
+    <select id="preset"></select>
+    <button class="amber" onclick="runPreset()" data-need>Run sequence</button>
+  </div>
+  <span class="sep"></span>
+  <button class="green" onclick="restoreSel()" data-need>Restore selected</button>
+  <span class="grp stat">sync in <input type="number" id="lead" value="2" min="0.5" max="60" step="0.5" style="width:56px"> s</span>
+  <span class="countdown" id="countdown"></span>
+</div>
+<main>
+  <div id="nodes" class="nodes"></div>
+  <section class="panel">
+    <div class="phead"><h2>Add Raspberry Pis</h2><span class="stat">each Pi runs PON Lab · default port 8080</span></div>
+    <div class="pbody">
+      <input id="h" placeholder="IP address, e.g. 192.168.1.50" style="flex:2;min-width:180px">
+      <input id="n" placeholder="Name (site / pole / meter bank)" style="flex:2;min-width:160px">
+      <input id="tk" placeholder="Access token (if set)" style="flex:1;min-width:120px">
+      <button class="green" onclick="addNode()">Add Pi</button>
+      <span class="sep"></span>
+      <input id="subnet" placeholder="192.168.1.0/24" style="width:160px">
+      <button onclick="scan()">Scan network</button>
+    </div>
+    <div class="pbody" id="found" style="display:none;padding-top:0;flex-direction:column;align-items:stretch"></div>
+  </section>
+  <div class="two">
+    <section class="panel">
+      <div class="phead"><h2>Fleet test runs</h2><span class="stat">click a run for each meter · skew = spread of actual cut times</span>
+        <a href="/api/results.csv"><button>Export results CSV</button></a></div>
+      <div class="scroll"><table id="runs"></table></div>
+    </section>
+    <section class="panel">
+      <div class="phead"><h2>All Pis event log</h2><a href="/api/events.csv"><button>Export CSV</button></a></div>
+      <div class="scroll"><table id="log"></table></div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+let F=null, sel=new Set(), structKey='', openRuns=new Set(), cdEnd=null, cdLabel='';
+try{sel=new Set(JSON.parse(localStorage.getItem('ponfleet-sel')||'[]'))}catch(e){}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=s=>{if(s==null)return'—';s=Math.max(0,s);const m=Math.floor(s/60),h=Math.floor(m/60);const sec=(s%60).toFixed(1).padStart(4,'0');
+  return h?`${h}:${String(m%60).padStart(2,'0')}:${sec}`:`${String(m).padStart(2,'0')}:${sec}`};
+const tstr=t=>t?new Date(t*1000).toLocaleTimeString([], {hour12:false})+'.'+String(Math.floor((t%1)*1000)).padStart(3,'0').slice(0,2):'';
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600)}
+function keepSel(){try{localStorage.setItem('ponfleet-sel',JSON.stringify([...sel]))}catch(e){}}
+async function api(url,body,method){const r=await fetch(url,{method:method||(body?'POST':'GET'),headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({}));if(!r.ok||j.ok===false)toast(j.error||('Error '+r.status));poll();return j}
+
+function allMeters(){const out=[];(F?.nodes||[]).forEach(n=>(n.channels||[]).forEach(c=>out.push({t:n.id+':'+c.id,n,c})));return out}
+
+function buildNodes(){
+  const box=$('#nodes');
+  if(!F.nodes.length){box.innerHTML='<div class="empty">No Pis yet. Add one below by IP address, or scan your network.</div>';return}
+  box.innerHTML=F.nodes.map(n=>`
+    <div class="node" id="n-${n.id}">
+      <div class="nh"><div class="lamp"></div>
+        <div><div class="nname">${esc(n.name)}</div><div class="nhost">${esc(n.host)}</div></div>
+        <span class="tag" data-r="tag"></span>
+        <span class="nbtn">
+        <a href="${esc(n.dashboard)}" target="_blank"><button class="icon" title="Open this Pi's own dashboard">↗</button></a>
+        <button class="icon" onclick="selNode('${n.id}')" title="Select all meters on this Pi">all</button>
+        <button class="icon" onclick="editNode('${n.id}')" title="Rename / token">✎</button>
+        <button class="icon" onclick="delNode('${n.id}')" title="Remove from fleet">✕</button></span>
+        <div class="nmeta" data-r="meta"></div>
+      </div>
+      <div class="chs">${(n.channels||[]).map(c=>`
+        <div class="ch" id="c-${n.id}-${c.id}" onclick="toggle('${n.id}:${c.id}')">
+          <div class="top"><span class="dot"></span><span class="cid">CH ${esc(c.id)}</span><span class="box">✓</span></div>
+          <div class="mname" title="${esc(c.meter||c.name)}">${esc(c.meter||c.name)}</div>
+          <div class="t" data-r="t">ON</div><div class="sub" data-r="sub"></div>
+          <div class="mks">${F.mark_types.map(m=>`<button class="mk" data-mk="${m.key}" title="${esc(m.label)} — ${esc(m.hint)}" onclick="event.stopPropagation();mark('${n.id}:${c.id}','${m.key}','${esc(m.label)}')">${esc(m.short||m.label)}</button>`).join('')}</div>
+        </div>`).join('') || `<div class="stat" style="padding:4px">${esc(n.error||'connecting…')}</div>`}</div>
+    </div>`).join('');
+}
+
+function render(){
+  const meters=allMeters(), online=F.nodes.filter(n=>n.online).length, out=meters.filter(m=>!m.c.powered).length;
+  $('#stats').innerHTML=`<b>${online}</b>/${F.nodes.length} Pis online · <b>${meters.length}</b> meters · <b style="color:${out?'var(--off)':'inherit'}">${out}</b> without power`;
+  // drop selections that no longer exist
+  const valid=new Set(meters.map(m=>m.t)); [...sel].forEach(t=>{if(!valid.has(t)&&F.nodes.length&&online===F.nodes.length)sel.delete(t)});
+  const key=JSON.stringify(F.nodes.map(n=>[n.id,n.name,n.host,(n.channels||[]).map(c=>c.id+c.meter)]));
+  if(key!==structKey){structKey=key;buildNodes()}
+  F.nodes.forEach(n=>{
+    const el=$('#n-'+n.id); if(!el)return;
+    el.classList.toggle('down',!n.online);
+    const tag=el.querySelector('[data-r=tag]');
+    tag.textContent=n.online?(n.sim?'SIM':'LIVE'):'OFFLINE'; tag.className='tag '+(n.online?(n.sim?'sim':'live'):'');
+    el.querySelector('[data-r=meta]').innerHTML=n.online?`clock ${n.offset_ms>=0?'+':''}${n.offset_ms??'?'} ms · ping ${n.rtt_ms??'?'} ms${n.has_token?' · 🔒':''}${n.token_required&&!n.has_token?' · <span style="color:var(--off)">needs token ✎</span>':''}`:
+      `<span style="color:var(--off)">${esc(n.error||'offline')}</span>`;
+    (n.channels||[]).forEach(c=>{
+      const ce=$(`#c-${n.id}-${c.id}`); if(!ce)return; const t=n.id+':'+c.id;
+      ce.classList.toggle('sel',sel.has(t)); ce.classList.toggle('out',!c.powered);
+      ce.querySelector('[data-r=t]').textContent=c.powered?'ON':fmt(c.outage_elapsed);
+      let sub=''; if(c.sequence)sub=`▶ ${c.sequence.step}/${c.sequence.total} ${c.sequence.phase.toUpperCase()} ${fmt(c.sequence.phase_left)}`;
+      else if(!c.powered&&c.restore_in!=null)sub='restore in '+fmt(c.restore_in);
+      ce.querySelector('[data-r=sub]').textContent=sub;
+      ce.querySelectorAll('[data-mk]').forEach(b=>{const v=c.marks?.[b.dataset.mk];b.classList.toggle('done',v!=null);
+        b.textContent=(F.mark_types.find(m=>m.key===b.dataset.mk).short)+(v!=null?' +'+Math.round(v)+'s':'')});
+    });
+  });
+  const sc=$('#selcount'); sc.textContent=`${sel.size} / ${F.max_targets}`; sc.classList.toggle('full',sel.size>=F.max_targets);
+  document.querySelectorAll('[data-need]').forEach(b=>b.disabled=!sel.size);
+  const ps=$('#preset'); if(!ps.options.length)ps.innerHTML=F.presets.map((p,i)=>`<option value="${i}">${esc(p.name)}</option>`).join('');
+  const gs=$('#group'), gv=gs.value; gs.innerHTML='<option value="">Saved groups…</option>'+F.groups.map(g=>`<option>${esc(g.name)}</option>`).join('')+(F.groups.length?'<option value="__del">— delete selected group…</option>':''); gs.value=gv;
+  renderRuns(); renderLog();
+}
+
+function skewClass(ms){return ms==null?'':ms<50?'good':ms<250?'ok':'bad'}
+function renderRuns(){
+  const mt=F.mark_types;
+  if(!F.runs.length){$('#runs').innerHTML='<tr><td class="note">No fleet runs yet. Pick meters above and cut them together.</td></tr>';return}
+  let h='<tr><th>Time</th><th>Run</th><th>Action</th><th>Meters</th><th>Cut skew</th><th>Pis reached</th></tr>';
+  F.runs.forEach(r=>{
+    const sent=Object.values(r.send||{}), okc=sent.filter(s=>s.ok).length;
+    h+=`<tr class="run" onclick="toggleRun('${r.id}')"><td>${tstr(r.at)}</td><td>${openRuns.has(r.id)?'▾':'▸'} ${esc(r.name)}</td><td>${r.op}</td>
+      <td>${r.targets.length?`${r.landed}/${r.targets.length}`:'all'}</td>
+      <td class="skew ${skewClass(r.skew_ms)}">${r.skew_ms!=null?r.skew_ms+' ms':'—'}</td><td>${sent.length?`${okc}/${sent.length}`:'—'}</td></tr>`;
+    if(openRuns.has(r.id)&&r.rows.length){
+      h+=`<tr class="det"><td>Pi · CH</td><td>Meter</td><td>Outage</td><td colspan="3">${mt.map(m=>m.short).join(' / ')} / sense dark (s from cut)</td></tr>`;
+      const first=Math.min(...r.rows.filter(x=>x.cut_at).map(x=>x.cut_at));
+      r.rows.forEach(x=>h+=`<tr class="det"><td>${esc(x.node)} · ${esc(x.ch)}</td><td>${esc(x.meter)}${x.cut_at?` <span style="color:var(--dim)">(+${((x.cut_at-first)*1000).toFixed(0)} ms)</span>`:' <span style="color:var(--off)">no cut seen</span>'}</td>
+        <td>${x.outage_s!=null?x.outage_s+'s':x.cut_at?'<span class="k-power_off">running</span>':'—'}</td>
+        <td colspan="3">${mt.map(m=>x[m.key]!=null?`<b style="color:var(--accent)">${x[m.key]}</b>`:'—').join(' / ')} / ${x.sense_dark??'—'}</td></tr>`);
+    }
+  });
+  $('#runs').innerHTML=h;
+}
+function toggleRun(id){openRuns.has(id)?openRuns.delete(id):openRuns.add(id);renderRuns()}
+function renderLog(){
+  const labels=Object.fromEntries(F.mark_types.map(m=>['mark:'+m.key,m.label]));
+  const cls=k=>k.startsWith('mark')?'k-mark':k.startsWith('sequence')?'k-seq':k==='sense_dark'?'k-sense':'k-'+k;
+  $('#log').innerHTML='<tr><th>Time</th><th>Pi</th><th>CH</th><th>Event</th><th>Detail</th></tr>'+F.events.slice(0,150).map(e=>{
+    let d=e.note||''; if(e.seconds_into_outage!=null)d=`+${e.seconds_into_outage}s `+d; if(e.kind==='power_on'&&e.outage_seconds!=null)d=`outage ${e.outage_seconds}s · `+d;
+    return `<tr><td>${tstr(e.ft)}</td><td>${esc(e.node_name)}</td><td>${esc(e.channel)}</td><td class="${cls(e.kind)}">${esc(labels[e.kind]||e.kind.replace('_',' '))}</td><td class="note">${esc(d)}</td></tr>`}).join('');
+}
+
+function toggle(t){if(sel.has(t))sel.delete(t);else{if(sel.size>=F.max_targets){toast(`Up to ${F.max_targets} meters at once`);return}sel.add(t)}keepSel();render()}
+function selectAll(){allMeters().filter(m=>m.n.online).slice(0,F.max_targets).forEach(m=>sel.add(m.t));keepSel();render();
+  if(allMeters().length>F.max_targets)toast(`Selected the first ${F.max_targets} meters`)}
+function selNode(id){allMeters().filter(m=>m.n.id===id).forEach(m=>{if(sel.size<F.max_targets)sel.add(m.t)});keepSel();render()}
+function clearSel(){sel.clear();keepSel();render()}
+function names(){return [...sel].map(t=>{const m=allMeters().find(x=>x.t===t);return m?`${m.n.name} ${m.c.id}`:t})}
+function lead(){return +$('#lead').value||2}
+function startCountdown(label){cdEnd=Date.now()+lead()*1000;cdLabel=label}
+async function cut(secs){
+  if(!confirm(`Cut power to ${sel.size} meter(s)${secs?` for ${secs} s`:''}, all together in ${lead()} s?\n\n${names().join('\n')}`))return;
+  startCountdown('cut'); const r=await api('/api/run',{targets:[...sel],op:'off',seconds:secs||null,lead:lead()});
+  if(r.ok)sendReport(r.run,'cut')}
+function sendReport(run,what){const bad=Object.entries(run.send).filter(([k,v])=>!v.ok);
+  if(!bad.length)toast(`Run ${run.id}: ${what} sent to ${Object.keys(run.send).length} Pi(s)`);
+  else toast(`Run ${run.id}: ${bad.length} Pi(s) did NOT get it — `+bad.map(([k,v])=>(F.nodes.find(n=>n.id===k)?.name||k)+': '+v.error).join('; '))}
+async function runPreset(){const p=F.presets[$('#preset').value];const tot=p.steps.reduce((a,s)=>a+s.off+s.on,0);
+  if(!confirm(`Run "${p.name}" on ${sel.size} meter(s) together?\n${p.steps.length} outage(s), about ${fmt(tot)} total.\n\n${names().join('\n')}`))return;
+  startCountdown('sequence'); const r=await api('/api/run',{targets:[...sel],op:'sequence',steps:p.steps,name:p.name,lead:lead()});
+  if(r.ok)sendReport(r.run,`"${p.name}"`)}
+async function restoreSel(){await api('/api/run',{targets:[...sel],op:'on'});toast('Restore sent')}
+async function restoreAll(){const r=await api('/api/restore_all',{});if(r.ok)toast(`Restore sent to ${r.reached}/${r.total} Pis`)}
+async function mark(t,k,l){await api('/api/mark',{target:t,kind:k});toast(`${l} marked`)}
+async function addNode(){const r=await api('/api/nodes',{host:$('#h').value,name:$('#n').value,token:$('#tk').value});if(r.ok){$('#h').value=$('#n').value=$('#tk').value=''}}
+async function delNode(id){const n=F.nodes.find(x=>x.id===id);if(confirm(`Remove ${n.name} from the fleet? (Its relays aren't changed.)`)){await api('/api/nodes/'+id,null,'DELETE');[...sel].forEach(t=>t.startsWith(id+':')&&sel.delete(t));keepSel()}}
+async function editNode(id){const n=F.nodes.find(x=>x.id===id);const name=prompt('Name for this Pi:',n.name);if(name==null)return;
+  const token=prompt('Access token (leave blank for none):','');await api('/api/nodes/'+id,{name,token:token||''})}
+async function scan(){const s=$('#subnet').value||'192.168.1.0/24';const f=$('#found');f.style.display='flex';f.innerHTML='<span class="stat">Scanning '+esc(s)+'…</span>';
+  const r=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subnet:s})}).then(r=>r.json());
+  if(!r.ok){f.innerHTML='<span class="stat" style="color:var(--off)">'+esc(r.error)+'</span>';return}
+  f.innerHTML=r.found.length?r.found.map(x=>`<div class="found"><b>${esc(x.host)}</b> <span class="stat">${esc(x.node||'')} · PON Lab ${esc(x.version||'')}</span>
+    ${x.known?'<span class="stat">already added</span>':`<button class="green" onclick="api('/api/nodes',{host:'${esc(x.host)}',name:'${esc(x.node||x.host)}'});this.disabled=true">Add</button>`}</div>`).join(''):'<span class="stat">No PON Lab Pis found on '+esc(s)+'.</span>'}
+async function saveGroup(){if(!sel.size){toast('Select meters first');return}const n=prompt('Name this group of meters:');if(n)await api('/api/groups',{name:n,targets:[...sel]})}
+async function loadGroup(){const v=$('#group').value;if(!v)return;
+  if(v==='__del'){const n=prompt('Delete which group? Type its name:');if(n)await api('/api/groups/'+encodeURIComponent(n),null,'DELETE');$('#group').value='';return}
+  const g=F.groups.find(x=>x.name===v);if(g){sel=new Set(g.targets);keepSel();render();toast(`Loaded "${g.name}" (${g.targets.length} meters)`)}}
+
+async function poll(){try{F=await fetch('/api/fleet').then(r=>r.json());render()}catch(e){$('#stats').textContent='Lost contact with PON Fleet server — retrying…'}}
+setInterval(poll,1000); poll();
+setInterval(()=>{$('#clock').textContent=new Date().toLocaleString([], {hour12:false});
+  const c=$('#countdown'); if(cdEnd){const l=(cdEnd-Date.now())/1000; if(l>0)c.textContent=`${cdLabel} in ${l.toFixed(1)} s`; else {c.textContent=`${cdLabel} fired`; if(l<-3){cdEnd=null;c.textContent=''}}}},100);
+</script>
+</body>
+</html>
